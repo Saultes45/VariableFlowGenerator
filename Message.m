@@ -2,8 +2,8 @@
 %%Message
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Synopsis
-% input :   
+%% Input/Outputs
+% input :
 %           0/1 % afficher à l'écran
 %           0/1 % enregistrer dans le fichier journal
 %           0/1 % commencer un nouveau fichier
@@ -11,6 +11,7 @@
 %           'KO' ou 'KO' ou 'UDEF' % case sensitive
 %           message de l'erreur s'il y en a eu une
 % ouput :
+%           None
 
 %% Example
 % Message(0,1,1,'Importation echouée', 'OK', RunID);
@@ -20,9 +21,15 @@
 % Message(1,1,1,'Importation peut-etre reussite', 'UDEF', RunID);
 
 %% Purpose
-% 'message' est une fonction qui peut être appelée pour enregistrer dans un
+% 'Message' est une fonction qui peut être appelée pour enregistrer dans un
 % fichier dans le répertoire "Log" situé à l'emplacement du programme
 % et/ou afficher à l'écran l'état (succès/échec) de l'éxécution d'une commande
+
+%% TODO
+% translate into English
+% Custom datetime format
+% Pop up message
+% Arguments check
 
 %% Metadata
 % Written by    : Nathanaël Esnault
@@ -49,7 +56,7 @@ function Message(affichage_a_lecran, ecriture_dans_le_fichier, bool_nouveau_fich
 % end
 
 %% Mise en forme du message
-formatOut = 'yyyy-mm-dd--HH-MM-SS-FFF';
+formatOut = 'yyyy-mm-dd--HH-MM-SS-FFF'; %Static
 
 if (strcmp(etat,'UDEF'))
     Imprime = [datestr(now,formatOut) ' '  message_a_ecrire];
@@ -58,13 +65,6 @@ else
 end
 
 
-% [ST,I] = dbstack('-completenames')
-% ST = 
-%     file: 'I:\MATLABFiles\mymfiles\lengthofline.m'
-%     name: 'lengthofline'
-%     line: 28
-% I =
-%      1
 %% Affichage à l'écran
 
 if affichage_a_lecran == 1
@@ -104,7 +104,7 @@ if ecriture_dans_le_fichier
                         fprintf(fid,'%s', Text_from_file{i});
                         break
                     else
-                        fprintf(fid,'%s\n', Text_from_file{i});
+                        fprintf(fid,'%s\r\n', Text_from_file{i});
                     end
                 end
                 fclose(fid);
@@ -129,34 +129,34 @@ if ecriture_dans_le_fichier
                     
                 end
                 
-                    [~,indice_fichier_le_plus_recent] = max(date_creation_fichier_log);
-                    
-                    
-                    fid = fopen( [cd '\Log\' MyDirInfo(liste_fichier_log(indice_fichier_le_plus_recent)).name], 'r' );
-                    i = 1;
+                [~,indice_fichier_le_plus_recent] = max(date_creation_fichier_log);
+                
+                
+                fid = fopen( [cd '\Log\' MyDirInfo(liste_fichier_log(indice_fichier_le_plus_recent)).name], 'r' );
+                i = 1;
+                tline = fgetl(fid);
+                Text_from_file{i} = tline;
+                while ischar(tline)
+                    i = i+1;
                     tline = fgetl(fid);
                     Text_from_file{i} = tline;
-                    while ischar(tline)
-                        i = i+1;
-                        tline = fgetl(fid);
-                        Text_from_file{i} = tline;
+                end
+                fclose(fid);
+                % Change cell Text_from_file
+                Text_from_file{i} = Imprime;
+                Text_from_file{i+1} = -1;
+                % Write cell Text_from_file into txt
+                fid = fopen( [cd '\Log\' MyDirInfo(liste_fichier_log(indice_fichier_le_plus_recent)).name], 'w' );
+                for i = 1:numel(Text_from_file)
+                    if Text_from_file{i} == -1
+                        fprintf(fid,'%s', Text_from_file{i});
+                        break
+                    else
+                        fprintf(fid,'%s\r\n', Text_from_file{i});
                     end
-                    fclose(fid);
-                    % Change cell Text_from_file
-                    Text_from_file{i} = Imprime;
-                    Text_from_file{i+1} = -1;
-                    % Write cell Text_from_file into txt
-                    fid = fopen( [cd '\Log\' MyDirInfo(liste_fichier_log(indice_fichier_le_plus_recent)).name], 'w' );
-                    for i = 1:numel(Text_from_file)
-                        if Text_from_file{i} == -1
-                            fprintf(fid,'%s', Text_from_file{i});
-                            break
-                        else
-                            fprintf(fid,'%s\n', Text_from_file{i});
-                        end
-                    end
-                    fclose(fid);
-                 
+                end
+                fclose(fid);
+                
                 %Methode par metadata
             end
             
@@ -167,18 +167,17 @@ if ecriture_dans_le_fichier
         %si le dossier Log est vide OU aucun fichier Log trouvé OU
         %continuer est désactivé
         %if isempty(MyDirInfo) || strcmp(liste_fichier_log,'empty') || isempty(liste_fichier_log) || bool_nouveau_fichier == 1
-         if isempty(MyDirInfo) || isempty(liste_fichier_log) || bool_nouveau_fichier == 1
+        if isempty(MyDirInfo) || isempty(liste_fichier_log) || bool_nouveau_fichier == 1
             %Création du fichier
             fid = fopen( [cd '\Log\Log-' RunID '.txt'], 'wt' );
             %Remplissage du fichier
-            fprintf(fid, '%s\n', 'Log file created thanks to the function : Message (v01r03)');
-            fprintf(fid, '%s\n', 'The function Message.m (v01r03) is the intellectual property of Nathanael Esnault');
-            fprintf(fid, '%s\n', 'Any action to distribute, share or copy, partially or completely...');
-            fprintf(fid, '%s\n', 'this function is liable if done without explicit agreement of the owner of this function');
-            fprintf(fid, '%s\n', 'By using this function, you agree to the terms and conditions written...');
-            fprintf(fid, '%s\n', 'in the txt file present in the same folder as the function');
-            fprintf(fid, '%s\n', '----------------------------------------------------------');
-            fprintf(fid, '%s\n', Imprime);
+            fprintf(fid, '%s\r\n', 'Log file created using function : Message (v01r04)');
+            fprintf(fid, '%s\r\n', 'The function Message.m is the intellectual property of Nathanael Esnault');
+            fprintf(fid, '%s\r\n', 'Any action to distribute, share or copy, partially or completely...');
+            fprintf(fid, '%s\r\n', 'this function is liable if done without explicit agreement of the owner of this function');
+            fprintf(fid, '%s\r\n', 'By using this function, you agree to the terms and conditions associated to its distribution...');
+            fprintf(fid, '%s\r\n', '----------------------------------------------------------');
+            fprintf(fid, '%s\r\n', Imprime);
             fclose(fid);
         end
         
@@ -188,9 +187,9 @@ if ecriture_dans_le_fichier
         mkdir([cd '\Log']);
         %Création du fichier
         fid = fopen( [cd '\Log\Log-' RunID '.txt'], 'wt' );
-         fprintf(fid, '%s\n', 'Log file created thanks to the function : Message (v01r00)\n Log folder created');
+        fprintf(fid, '%s\r\n', 'Log file created thanks to the function : Message (v01r04)\r\n Log folder created');
         %Remplissage du fichier
-        fprintf(fid, '%s\n', Imprime);
+        fprintf(fid, '%s\r\n', Imprime);
         fclose(fid);
         
     end
